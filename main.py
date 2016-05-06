@@ -1,85 +1,86 @@
 import arm_controller
-import bean_finder
+import bean_viewer
 import time
 
-def scan(control):
+def scan(controller, viewer):
     print("scanning for beans")
-    points = bean_finder.find_points()
+    viewer.update_image()
+    points = viewer.find_beans()
     direction = arm.shoulder_right
     while len(points) == 0:
-        borders = bean_finder.find_pencil()
+        borders = viewer.find_pencil()
         if len(borders) > 0:
-            if borders[0][0] > camera_mid:
-                direction = arm.shoulder_left
-            else:
-                direction = arm.shoulder_right
-        control.run_pin(direction, 0.5)
-        points = bean_finder.find_points()
+            direction = arm.shoulder_left if borders[0][0] > camera_mid else arm.shoulder_right
+        controller.run_pin(direction, 0.5)
+        viewer.update_image()
+        points = viewer.find_beans()
     
     distance = abs(points[0][0] - camera_mid)
     while distance > 10:
         turn_time = distance * 0.005
-        
         if points[0][0] < camera_mid:
             arm.run_pin(arm.shoulder_left, turn_time)
         else:
             arm.run_pin(arm.shoulder_right, turn_time)
-        points = bean_finder.find_points()
+        viewer.update_image()
+        points = viewer.find_beans()
         distance = abs(points[0][0] - camera_mid)
 
-def target_claw(control):
+def target_claw(controller, viewer):
     print("targeting claw")
-    control.enable_pin(control.led)
-    led_location = bean_finder.find_led()
+    controller.enable_pin(controller.led)
+    viewer.update_image()
+    led_location = viewer.find_led()
     while led_location == None:
-        control.run_pin(control.shoulder_down, 0.1)
-        led_location = bean_finder.find_led()
+        controller.run_pin(controller.shoulder_down, 0.1)
+        viewer.update_image()
+        led_location = viewer.find_led()
 
-    spotlight_location = bean_finder.find_spotlight()
-    bean_locations = bean_finder.find_points()
+    spotlight_location = viewer.find_spotlight()
+    bean_locations = viewer.find_beans()
     if spotlight_location == None or len(bean_locations) == 0:
-        control.disable_pin(control.led)
+        controller.disable_pin(controller.led)
         return
     distance = spotlight_location[1] - bean_locations[0][1]
     while abs(distance) > 10:
         if distance > 0:
-            control.run_pin(control.wrist_up, 0.1)
+            controller.run_pin(controller.wrist_up, 0.1)
         else:
-            control.run_pin(control.wrist_down, 0.1)
+            controller.run_pin(controller.wrist_down, 0.1)
             
-        bean_finder.test_show(bean_finder.find_points)
-        spotlight_location = bean_finder.find_spotlight()
-        bean_locations = bean_finder.find_points()
+        viewer.update_image()
+        viewer.test_show(viewer.find_beans)
+        spotlight_location = viewer.find_spotlight()
+        bean_locations = viewer.find_beans()
         if spotlight_location == None or len(bean_locations) == 0:
             break
         distance = spotlight_location[1] - bean_locations[0][1]
     
-    control.disable_pin(control.led)
+    controller.disable_pin(controller.led)
+
+def approach_claw(controller, viewer):
+    print("approaching with claw")
+    viewer.update_image()
+    bean_locations = viewer.find_beans()
+    controller.enable_pin(controller.led)
+    viewer.update_image()
+    led_location = viewer.find_led()
+    while led_location == None or led_location[1] < bean_locations[0][1] - 100:
+        controller.run_pin(controller.shoulder_down, 0.1)
+        viewer.update_image()
+        led_location = viewer.find_led()
+        viewer.test_show(viewer.find_led)
+    controller.disable_pin(controller.led)
+
 
 arm = arm_controller.Controller()
-
+eye = bean_viewer.BeanEye()
 camera_mid = 243
 
-def approach_claw(control):
-    print("approaching with claw")
-    bean_locations = bean_finder.find_points()
-    control.enable_pin(control.led)
-    led_location = bean_finder.find_led()
-    while led_location == None or led_location[1] < bean_locations[0][1] - 100:
-        control.run_pin(control.shoulder_down, 0.1)
-        led_location = bean_finder.find_led()
-        bean_finder.test_show(bean_finder.find_led)
-    control.disable_pin(control.led)
-
 try:
-##    arm.run_pin(arm.shoulder_up, 2)
-##    arm.enable_pin(arm.led)
-##    bean_finder.test_show()
-
-##    scan(arm)
-##    target_claw(arm)
-##    approach_claw(arm)
-##    target_claw(arm)
-##    arm.run_pin(arm.claw_open, 1)
+    scan(arm, eye)
+    target_claw(arm, eye)
+    approach_claw(arm, eye)
+    target_claw(arm, eye)
 finally:
     arm.cleanup()
