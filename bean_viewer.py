@@ -18,7 +18,7 @@ class BeanEye(object):
             return []
 
         points = [x.pt for x in self.bean_detector.detect(self.latest_image)]
-        print("beans: " + str(points))
+        # print("beans: " + str(points))
         return points
 
     def find_pencil(self):
@@ -26,7 +26,7 @@ class BeanEye(object):
             return []
 
         points = [x.pt for x in self.pencil_detector.detect(self.latest_image) if x.pt[1] > 200]
-        print("pencils: " + str(points))
+        # print("pencils: " + str(points))
         return points
 
     def find_led(self):
@@ -42,7 +42,7 @@ class BeanEye(object):
                 points = None
         else:
             points = None
-        print("claw: " + str(points))
+        # print("claw: " + str(points))
         return points
 
     def find_spotlight(self):
@@ -54,7 +54,7 @@ class BeanEye(object):
             points = max(keypoints, key=lambda p: sum(self.latest_image[p.pt[1], p.pt[0],:])).pt
         else:
             points = None
-        print("spotlight: " + str(points))
+        # print("spotlight: " + str(points))
         return points
 
     def update_image(self):
@@ -92,7 +92,7 @@ class BeanEye(object):
 ## Feature Detector Builders ##
 def build_bean_detector():
     bean_params = cv2.SimpleBlobDetector_Params()
-    bean_params.minArea = 500
+    bean_params.minArea = 300
     bean_params.filterByConvexity = True
     bean_params.minConvexity = 0
     bean_params.maxConvexity = 1
