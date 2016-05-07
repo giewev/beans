@@ -2,6 +2,7 @@
 import cv2
 import numpy as np;
 import math
+import pickle
 
 class BeanEye(object):
     def __init__(self):
@@ -12,7 +13,7 @@ class BeanEye(object):
 
         self.latest_image = None
 
-    def find_beans():
+    def find_beans(self):
         if self.latest_image == None:
             return []
 
@@ -20,7 +21,7 @@ class BeanEye(object):
         print("beans: " + str(points))
         return points
 
-    def find_pencil():
+    def find_pencil(self):
         if self.latest_image == None:
             return []
 
@@ -28,7 +29,7 @@ class BeanEye(object):
         print("pencils: " + str(points))
         return points
 
-    def find_led():
+    def find_led(self):
         if self.latest_image == None:
             return None
 
@@ -44,7 +45,7 @@ class BeanEye(object):
         print("claw: " + str(points))
         return points
 
-    def find_spotlight():
+    def find_spotlight(self):
         if self.latest_image == None:
             return None
 
@@ -56,19 +57,27 @@ class BeanEye(object):
         print("spotlight: " + str(points))
         return points
 
-    def update_image():
+    def update_image(self):
         cap = cv2.VideoCapture(0)
         ret, frame = cap.read()
         self.latest_image = frame
 
-    def display_view():
+    def display_view(self):
         if self.latest_image == None:
             return
 
         cv2.imshow("Current View", self.latest_image)
         cv2.waitKey(0)
 
-    def test_show(point_func):
+    def save_view(self, file_name):
+        with open(file_name, 'wb') as f:
+            pickle.dump(self.latest_image, f)
+
+    def load_view(self, file_name):
+        with open(file_name, 'rb') as f:
+            self.latest_image = pickle.load(f)
+
+    def test_show(self, point_func):
         x = point_func()
         if x:
             if type(x) == type([]):
